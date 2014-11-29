@@ -1,7 +1,7 @@
 <?php
 	// Copyright (C) 2014 Vladimir P.
 	
-	require_once('lib/Matrix.php');
+	require_once('lib/Matrix2D.php');
 	
 	define('DATA_JSON_FILE', 'data.json');
 	
@@ -53,9 +53,7 @@
 						  0x0000FF);
 			}
 			
-			$m = new Matrix();
-			$m->translate($currX, $currY);
-			$m->rotate($data->a[$i]);
+			$m = (new Matrix2D())->translate($currX, $currY)->rotate($data->a[$i]);
 			$flag = [];
 			$flag = array_merge($flag, $m->apply(-FLAG_WIDTH / 2, -FLAG_HEIGHT / 2));
 			$flag = array_merge($flag, $m->apply(-FLAG_WIDTH / 2,  FLAG_HEIGHT / 2));
