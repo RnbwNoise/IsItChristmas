@@ -1,7 +1,7 @@
 <?php
     // Copyright (C) 2014 Vladimir P.
     
-    require_once('lib/Matrix2D.php');
+    require_once('lib/ImageAffineMatrix.php');
     
     define('DATA_JSON_FILE', 'data.json');
     
@@ -53,12 +53,12 @@
                           0x0000FF);
             }
             
-            $m = (new Matrix2D())->translate($currX, $currY)->rotate($data->a[$i]);
+            $m = (new ImageAffineMatrix())->translate($currX, $currY)->rotate($data->a[$i]);
             $flag = [];
-            $flag = array_merge($flag, $m->apply(-FLAG_WIDTH / 2, -FLAG_HEIGHT / 2));
-            $flag = array_merge($flag, $m->apply(-FLAG_WIDTH / 2,  FLAG_HEIGHT / 2));
-            $flag = array_merge($flag, $m->apply( FLAG_WIDTH / 2,  FLAG_HEIGHT / 2));
-            $flag = array_merge($flag, $m->apply( FLAG_WIDTH / 2, -FLAG_HEIGHT / 2));
+            $flag = array_merge($flag, $m->transformPoint(-FLAG_WIDTH / 2, -FLAG_HEIGHT / 2));
+            $flag = array_merge($flag, $m->transformPoint(-FLAG_WIDTH / 2,  FLAG_HEIGHT / 2));
+            $flag = array_merge($flag, $m->transformPoint( FLAG_WIDTH / 2,  FLAG_HEIGHT / 2));
+            $flag = array_merge($flag, $m->transformPoint( FLAG_WIDTH / 2, -FLAG_HEIGHT / 2));
             imageFilledPolygon($image, $flag, count($flag) / 2,
                                imageColorResolveAlpha($image, 200, 200, 200, 92));
         }
