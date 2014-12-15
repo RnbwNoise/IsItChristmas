@@ -17,6 +17,7 @@
     }, 50, 100);
     $data[] = [ 'p' => $points, 'a' => getAngles($points) ];
     
+    /*
     // Flower
     $flowerSections = 6;
     $points = getPoints(function($t) {
@@ -42,6 +43,7 @@
         return [ $r * cos($a), $r * sin($a) ];
     }, 8 * $starSections, 10);
     $data[] = [ 'p' => $points, 'a' => getAngles($points) ];
+    */
     
     
     file_put_contents(DATA_JSON_FILE, json_encode($data));
