@@ -53,6 +53,8 @@ var IICBot = {
         a: [], // rotation (radians)
     },
     
+    runTimer: null,
+    
     // Sets the shape to a parametric curve. Provided function must take in a value between 0 and 1.
     setCurve: function(curve, count, attemptsToMakePointsEquidistant) {
         var params = [];
@@ -112,12 +114,18 @@ var IICBot = {
             }.bind(null, this.shape.x[i], this.shape.y[i], this.shape.a[i]), time);
             time += this.delayPerPoint;
         }
-        setTimeout(this.run.bind(this), time);
+        this.runTimer = setTimeout(this.run.bind(this), time);
+    },
+    
+    // Ends the shape drawing cycle.
+    stop: function() {
+        clearTimeout(this.runTimer);
+        this.runTimer = null;
     }
 };
 
 IICBot.setCurve(function(t) {
-    var scale = 100;
+    var scale = 40;
     var tx = 400;
     var ty = 400;
     
@@ -126,6 +134,6 @@ IICBot.setCurve(function(t) {
     var n = Math.PI - Math.abs(Math.PI - t);
     var p = 2.0 * (1 - n / Math.PI) + 0.3 * n * (Math.PI - n) + 0.6 * n * (Math.PI - n) * (n - Math.PI / 2);
     return [ -p * Math.sin(t) * scale + tx, p * Math.cos(t) * scale + ty ];
-}, 50, 100);
+}, 20, 100);
 
 IICBot.run();
