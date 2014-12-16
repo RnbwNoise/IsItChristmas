@@ -1,9 +1,12 @@
 <?php
-    // Copyright (C) 2014 Vladimir P.
+    require_once('lib/ImageAffineMatrix.php');
     
-    define('DATA_JSON_FILE', 'data.json');
     
-    $data = [];
+    define('IMAGE_WIDTH',  800);
+    define('IMAGE_HEIGHT', 600);
+    
+    define('FLAG_WIDTH',  40);
+    define('FLAG_HEIGHT', 30);
     
     
     // Heart
@@ -15,7 +18,7 @@
         $p = 2.0 * (1 - $n / M_PI) + 0.3 * $n * (M_PI - $n) + 0.6 * $n * (M_PI - $n) * ($n - M_PI / 2);
         return [ -$p * sin($t) * $scale, $p * cos($t) * $scale ];
     }, 50, 100);
-    $data[] = [ 'p' => $points, 'a' => getAngles($points) ];
+    $angles = getAngles($points);
     
     /*
     // Flower
@@ -29,7 +32,7 @@
         $a = 2*M_PI * $t;
         return [ $r * cos($a), $r * sin($a) ];
     }, 8 * $flowerSections, 10);
-    $data[] = [ 'p' => $points, 'a' => getAngles($points) ];
+    $angles = getAngles($points);
     
     // Star
     $starSections = 5;
@@ -42,11 +45,11 @@
         $a = 2*M_PI * $t;
         return [ $r * cos($a), $r * sin($a) ];
     }, 8 * $starSections, 10);
-    $data[] = [ 'p' => $points, 'a' => getAngles($points) ];
+    $angles = getAngles($points);
     */
     
-    
-    file_put_contents(DATA_JSON_FILE, json_encode($data));
+    header('Content-type: image/png');
+    imagePNG(makeCurvePreviewImage($points, $angles));
     
     
     function getPoints($curve, $count, $attemptsToMakePointsEquidistant) {
@@ -99,6 +102,57 @@
         
         return $angles;
     }
+    
+    
+    function makeCurvePreviewImage($points, $angles, $debug = true) {
+        assert(count($points) % 2 === 0);
+        $count = count($points) / 2;
+        assert($count === count($angles));
+        
+        $image = imageCreateTrueColor(IMAGE_WIDTH, IMAGE_HEIGHT);
+        imageFilledRectangle($image, 0, 0, IMAGE_WIDTH - 1, IMAGE_HEIGHT - 1, 0xFFFFFF);
+        
+        imageLine($image, IMAGE_WIDTH * (3/8), IMAGE_HEIGHT / 2,
+                  IMAGE_WIDTH * (5/8), IMAGE_HEIGHT / 2, 0xDDDDDD);
+        imageLine($image, IMAGE_WIDTH / 2, IMAGE_HEIGHT * (3/8),
+                  IMAGE_WIDTH / 2, IMAGE_HEIGHT * (5/8), 0xDDDDDD);
+        
+        $centerX = IMAGE_WIDTH / 2;
+        $centerY = IMAGE_HEIGHT / 2;
+        for($i = 0; $i < $count; ++$i) {
+            $currX = $points[$i * 2    ] + $centerX;
+            $currY = $points[$i * 2 + 1] + $centerY;
+            $nextX = $points[($i + 1) % $count * 2    ] + $centerX;
+            $nextY = $points[($i + 1) % $count * 2 + 1] + $centerY;
+            
+            if($debug) {
+                imageLine($image, $currX, $currY, $nextX, $nextY, 0xFF0000);
+                imageFilledRectangle($image, $currX - 2, $currY - 2, $currX + 2, $currY + 2, 0xFF0000);
+                
+                imageLine($image, $currX, $currY,
+                          $currX + 20 * cos($angles[$i]),
+                          $currY + 20 * sin($angles[$i]),
+                          0x0000FF);
+            }
+            
+            $m = (new ImageAffineMatrix())->translate($currX, $currY)->rotate($angles[$i]);
+            $flag = [];
+            $flag = array_merge($flag, $m->transformPoint(-FLAG_WIDTH / 2, -FLAG_HEIGHT / 2));
+            $flag = array_merge($flag, $m->transformPoint(-FLAG_WIDTH / 2,  FLAG_HEIGHT / 2));
+            $flag = array_merge($flag, $m->transformPoint( FLAG_WIDTH / 2,  FLAG_HEIGHT / 2));
+            $flag = array_merge($flag, $m->transformPoint( FLAG_WIDTH / 2, -FLAG_HEIGHT / 2));
+            imageFilledPolygon($image, $flag, count($flag) / 2,
+                               imageColorResolveAlpha($image, 200, 200, 200, 92));
+        }
+        
+        $label = $count . ' points';
+        $labelWidth = imageFontWidth(5) * strlen($label);
+        imageString($image, 5, IMAGE_WIDTH - 1 - $labelWidth, IMAGE_HEIGHT - 1 - imageFontHeight(5),
+                    $label, 0xFF0000);
+        
+        return $image;
+    }
+    
     
     function lerp($start, $end, $ratio) {
         return $start + $ratio * ($end - $start);
