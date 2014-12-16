@@ -1,28 +1,48 @@
 var IIC = {
     setCountry: function(countryCode) {
+        // Set the country code.
         me.country = countryCode;
         
-        if(me.flag && me.flag.parentElement)
+        // Delete the old cursor, if necessary.
+        var isFlagVisible = me.flag && me.flag.parentElement;
+        if(isFlagVisible)
             me.flag.parentElement.removeChild(me.flag);
+        
+        // Create a new cursor.
         setCursor(me.country);
+        
+        // Flag was visible: put it back (code is from mouseMove() in IIC)
+        if(isFlagVisible) {
+            document.body.appendChild(me.flag);
+            document.body.style.cursor = "none";
+            document.getElementById("answer").style.cursor = "none";
+            me.flag._new = false;
+        }
     },
     
     setPosition: function(x, y) {
+        // Pretend we moved the mouse to a given location.
         mouseMove({ clientX: x, clientY: y });
     },
     
     setAngle: function(angle /* radians */) {
-        // from mouseWheel(event) in IIC
+        // Set the local (code is from mouseWheel(event) in IIC)
         me.angle = angle / Math.PI * 180;
+        
+        // Set the rotation of the cursor.
         setRotate(me.flag, me.angle);
+        
+        // And broadcast it to everyone else.
         emit('scroll', { id: me.id, angle: me.angle });
     },
     
     makeWave: function(x, y) {
+        // Pretend we made a left mouse click.
         mouseClick({ clientX: x, clientY: y, button: 0 });
     },
     
     makeGhost: function(x, y) {
+        // Pretend we made a right mouse click.
         mouseClick({ clientX: x, clientY: y, button: 2 });
     }
 };
@@ -31,9 +51,9 @@ var IICBot = {
     delayPerPoint: 200, // ms
     
     shape: {
-        x: [],
-        y: [],
-        a: [],
+        x: [], // position (x)
+        y: [], // position (y)
+        a: [], // rotation (radians)
     },
     
     // Sets the shape to a parametric curve. Provided function must take in a value between 0 and 1.
