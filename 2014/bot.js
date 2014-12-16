@@ -88,17 +88,17 @@ var IICBot = {
         
         this.shape.a = [];
         for(var i = 0; i < count; i++) {
-            var prevX = IICBot.shape.x[((i - 1) + count) % count];
-            var prevY = IICBot.shape.y[((i - 1) + count) % count];
-            var nextX = IICBot.shape.x[((i + 1) + count) % count];
-            var nextY = IICBot.shape.y[((i + 1) + count) % count];
+            var prevX = this.shape.x[((i - 1) + count) % count];
+            var prevY = this.shape.y[((i - 1) + count) % count];
+            var nextX = this.shape.x[((i + 1) + count) % count];
+            var nextY = this.shape.y[((i + 1) + count) % count];
             var angle = Math.atan2(nextY - prevY, nextX - prevX);
             
             // Keep the flag right-side up.
             if(Math.abs(angle) > Math.PI / 2) // assuming the value is in the range of arctan
                 angle -= Math.PI;
             
-            IICBot.shape.a.push(angle);
+            this.shape.a.push(angle);
         }
     },
     
