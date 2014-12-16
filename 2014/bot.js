@@ -28,12 +28,13 @@ var IIC = {
 };
 
 var IICBot = {
+    delayPerPoint: 200, // ms
+    
     shape: {
         x: [],
         y: [],
         a: [],
     },
-    delayPerPoint: 200, // ms
     
     // Sets the shape to a parametric curve. Provided function must take in a value between 0 and 1.
     setCurve: function(curve, count, attemptsToMakePointsEquidistant) {
@@ -84,7 +85,7 @@ var IICBot = {
         for(var i = 0; i < this.shape.x.length; i++) {
             setTimeout(function(x, y, a) {
                 IIC.setAngle(a);
-                IIC.makeGhost(400 + x, 400 + y);
+                IIC.makeGhost(x, y);
             }.bind(null, this.shape.x[i], this.shape.y[i], this.shape.a[i]), time);
             time += this.delayPerPoint;
         }
@@ -94,11 +95,14 @@ var IICBot = {
 
 IICBot.setCurve(function(t) {
     var scale = 100;
+    var tx = 400;
+    var ty = 400;
+    
     t *= 2 * Math.PI;
     // Madeloid formula is from http://johnthemathguy.blogspot.com/2013/02/the-function-of-heart.html
     var n = Math.PI - Math.abs(Math.PI - t);
     var p = 2.0 * (1 - n / Math.PI) + 0.3 * n * (Math.PI - n) + 0.6 * n * (Math.PI - n) * (n - Math.PI / 2);
-    return [ -p * Math.sin(t) * scale, p * Math.cos(t) * scale ];
+    return [ -p * Math.sin(t) * scale + tx, p * Math.cos(t) * scale + ty ];
 }, 50, 100);
 
 IICBot.run();
