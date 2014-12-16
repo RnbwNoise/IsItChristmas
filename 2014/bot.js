@@ -1,20 +1,27 @@
 var IIC = {
     setCountry: function(countryCode) {
         me.country = countryCode;
+        
+        if(me.flag && me.flag.parentElement)
+            me.flag.parentElement.removeChild(me.flag);
         setCursor(me.country);
     },
+    
     setPosition: function(x, y) {
         mouseMove({ clientX: x, clientY: y });
     },
-    setAngle: function(angle /* rad */) {
+    
+    setAngle: function(angle /* radians */) {
         // from mouseWheel(event) in IIC
         me.angle = angle / Math.PI * 180;
         setRotate(me.flag, me.angle);
-        emit('scroll', {id: me.id, angle: me.angle});
+        emit('scroll', { id: me.id, angle: me.angle });
     },
+    
     makeWave: function(x, y) {
         mouseClick({ clientX: x, clientY: y, button: 0 });
     },
+    
     makeGhost: function(x, y) {
         mouseClick({ clientX: x, clientY: y, button: 2 });
     }
