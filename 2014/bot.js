@@ -1,6 +1,5 @@
 var IIC = {
     setCountry: function(countryCode) {
-        // Set the country code.
         me.country = countryCode;
         
         // Delete the old cursor, if necessary.
@@ -26,10 +25,8 @@ var IIC = {
     },
     
     setAngle: function(angle /* radians */) {
-        // Set the local (code is from mouseWheel(event) in IIC)
-        me.angle = angle / Math.PI * 180;
-        
         // Set the rotation of the cursor.
+        me.angle = angle / Math.PI * 180;
         setRotate(me.flag, me.angle);
         
         // And broadcast it to everyone else.
