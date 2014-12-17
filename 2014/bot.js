@@ -53,17 +53,8 @@ var IICBot = {
     delayPerPoint: 200, // ms
     runTimer: null,
     
-    // Normalizes the angle to [-M_PI, M_PI].
-    _normalizeAngleToPI: function(angle) {
-        while(angle < -Math.PI)
-            angle += Math.PI;
-        while(angle > Math.PI)
-            angle -= Math.PI;
-        return angle;
-    },
-    
     // Normalizes the angle to [0, 2*M_PI].
-    _normalizeAngleTo2PI: function(angle) {
+    _normalizeAngle: function(angle) {
         var TWO_PI = 2 * Math.PI;
         while(angle < 0)
             angle += TWO_PI;
@@ -97,6 +88,7 @@ var IICBot = {
             }
         }
         
+        // Calculate all flag positions.
         this.shape.x = [];
         this.shape.y = [];
         for(var i = 0; i < count; i++) {
@@ -107,8 +99,9 @@ var IICBot = {
         
         // Calculate the angle AOB, where A and B are the upper corners of the flag and O is its center point.
         var FLAG_HEIGHT = 20;
-        var flagAngle = this._normalizeAngleTo2PI(Math.atan2(flagWidth(me.country) / 2, FLAG_HEIGHT / 2) * 2);
+        var flagAngle = this._normalizeAngle(Math.atan2(flagWidth(me.country) / 2, FLAG_HEIGHT / 2) * 2);
         
+        // Calculate all rotation angles.
         this.shape.a = [];
         for(var i = 0; i < count; i++) {
             var prevX = this.shape.x[((i - 1) + count) % count]; // Point P
@@ -122,15 +115,16 @@ var IICBot = {
             var angle = Math.atan2(nextY - prevY, nextX - prevX);
             
             // If the angle PCN is less than the flag's AOB angle, its a sharp turn and we have to
-            // rotate the flag 90 deg to make the turn look sharp as well.
+            // rotate the flag 90 deg to make the corner look sharp as well.
             var prevCurrAngle = Math.atan2(currY - prevY, currX - prevX);
             var nextCurrAngle = Math.atan2(currY - nextY, currX - nextX);
-            var turnAngle = this._normalizeAngleTo2PI(nextCurrAngle - prevCurrAngle);
+            var turnAngle = this._normalizeAngle(nextCurrAngle - prevCurrAngle);
             if(Math.min(turnAngle, 2 * Math.PI - turnAngle) < flagAngle)
                 angle -= Math.PI / 2;
             
             // Keep the flag right-side up.
-            if(Math.abs(this._normalizeAngleToPI(angle)) > Math.PI / 2)
+            angle = this._normalizeAngle(angle);
+            if(angle > Math.PI / 2 && angle < 3 * Math.PI / 2)
                 angle -= Math.PI;
             
             this.shape.a.push(angle);
