@@ -45,15 +45,32 @@ var IIC = {
 };
 
 var IICBot = {
-    delayPerPoint: 200, // ms
-    
     shape: {
         x: [], // position (x)
         y: [], // position (y)
         a: [], // rotation (radians)
     },
-    
+    delayPerPoint: 200, // ms
     runTimer: null,
+    
+    // Normalizes the angle to [-M_PI, M_PI].
+    _normalizeAngleToPI: function(angle) {
+        while(angle < -Math.PI)
+            angle += Math.PI;
+        while(angle > Math.PI)
+            angle -= Math.PI;
+        return angle;
+    },
+    
+    // Normalizes the angle to [0, 2*M_PI].
+    _normalizeAngleTo2PI: function(angle) {
+        var TWO_PI = 2 * Math.PI;
+        while(angle < 0)
+            angle += TWO_PI;
+        while(angle > TWO_PI)
+            angle -= TWO_PI;
+        return angle;
+    },
     
     // Sets the shape to a parametric curve. Provided function must take in a value between 0 and 1.
     setCurve: function(curve, count, attemptsToMakePointsEquidistant) {
@@ -88,16 +105,32 @@ var IICBot = {
             this.shape.y.push(point[1]);
         }
         
+        // Calculate the angle AOB, where A and B are the upper corners of the flag and O is its center point.
+        var FLAG_HEIGHT = 20;
+        var flagAngle = this._normalizeAngleTo2PI(Math.atan2(flagWidth(me.country) / 2, FLAG_HEIGHT / 2) * 2);
+        
         this.shape.a = [];
         for(var i = 0; i < count; i++) {
-            var prevX = this.shape.x[((i - 1) + count) % count];
+            var prevX = this.shape.x[((i - 1) + count) % count]; // Point P
             var prevY = this.shape.y[((i - 1) + count) % count];
-            var nextX = this.shape.x[((i + 1) + count) % count];
+            var currX = this.shape.x[i]; // Point C
+            var currY = this.shape.y[i];
+            var nextX = this.shape.x[((i + 1) + count) % count]; // Point N
             var nextY = this.shape.y[((i + 1) + count) % count];
+            
+            // Make the flag parallel to the line PN.
             var angle = Math.atan2(nextY - prevY, nextX - prevX);
             
+            // If the angle PCN is less than the flag's AOB angle, its a sharp turn and we have to
+            // rotate the flag 90 deg to make the turn look sharp as well.
+            var prevCurrAngle = Math.atan2(currY - prevY, currX - prevX);
+            var nextCurrAngle = Math.atan2(currY - nextY, currX - nextX);
+            var turnAngle = this._normalizeAngleTo2PI(nextCurrAngle - prevCurrAngle);
+            if(Math.min(turnAngle, 2 * Math.PI - turnAngle) < flagAngle)
+                angle -= Math.PI / 2;
+            
             // Keep the flag right-side up.
-            if(Math.abs(angle) > Math.PI / 2) // assuming the value is in the range of arctan
+            if(Math.abs(this._normalizeAngleToPI(angle)) > Math.PI / 2)
                 angle -= Math.PI;
             
             this.shape.a.push(angle);
