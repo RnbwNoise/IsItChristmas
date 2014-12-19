@@ -96,7 +96,7 @@ var IICBot = {
                 IIC.makeGhost(x, y);
                 if(Math.random() < this.waveProbabiliy)
                     IIC.makeWave(x, y);
-            }.bind(null, this.shape.x[i], this.shape.y[i], this.shape.a[i]), time);
+            }.bind(this, this.shape.x[i], this.shape.y[i], this.shape.a[i]), time);
             time += this.delayPerPoint;
         }
         
