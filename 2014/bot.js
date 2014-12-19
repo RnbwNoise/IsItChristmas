@@ -1,54 +1,3 @@
-var IIC = {
-    setCountry: function(countryCode) {
-        me.country = countryCode;
-        
-        // Delete the old cursor and remember its position, if necessary.
-        var isFlagVisible = me.flag && me.flag.parentElement;
-        var oldFlagPosition = null;
-        if(isFlagVisible) {
-            me.flag.parentElement.removeChild(me.flag);
-            oldFlagPosition = { left: me.flag.style.left, top: me.flag.style.top };
-        }
-        
-        // Create a new cursor.
-        setCursor(me.country);
-        
-        // Flag was visible: put it back.
-        if(isFlagVisible) {
-            document.body.appendChild(me.flag);
-            
-            me.flag.style.left = oldFlagPosition.left;
-            me.flag.style.top = oldFlagPosition.top;
-            
-            me.flag._new = false;
-        }
-    },
-    
-    setPosition: function(x, y) {
-        // Pretend we moved the mouse to a given location.
-        mouseMove({ clientX: x, clientY: y });
-    },
-    
-    setAngle: function(angle /* radians */) {
-        // Set the rotation of the cursor.
-        me.angle = angle / Math.PI * 180;
-        setRotate(me.flag, me.angle);
-        
-        // And broadcast it to everyone else.
-        emit('scroll', { id: me.id, angle: me.angle });
-    },
-    
-    makeWave: function(x, y) {
-        // Pretend we made a left mouse click.
-        mouseClick({ clientX: x, clientY: y, button: 0 });
-    },
-    
-    makeGhost: function(x, y) {
-        // Pretend we made a right mouse click.
-        mouseClick({ clientX: x, clientY: y, button: 2 });
-    }
-};
-
 var IICBot = {
     shape: {
         x: [], // position (x)
@@ -56,6 +5,7 @@ var IICBot = {
         a: [], // rotation (radians)
     },
     delayPerPoint: 200, // ms
+    waveProbabiliy: 0.3,
     runTimer: null,
     
     // Normalizes the angle to [0, 2*M_PI].
@@ -139,13 +89,17 @@ var IICBot = {
     // Draws the shape over and over again.
     run: function() {
         var time = 0;
+        
         for(var i = 0; i < this.shape.x.length; i++) {
             setTimeout(function(x, y, a) {
                 IIC.setAngle(a);
                 IIC.makeGhost(x, y);
+                if(Math.random() < this.waveProbabiliy)
+                    IIC.makeWave(x, y);
             }.bind(null, this.shape.x[i], this.shape.y[i], this.shape.a[i]), time);
             time += this.delayPerPoint;
         }
+        
         this.runTimer = setTimeout(this.run.bind(this), time);
     },
     
@@ -166,6 +120,6 @@ IICBot.setCurve(function(t) {
     var n = Math.PI - Math.abs(Math.PI - t);
     var p = 2.0 * (1 - n / Math.PI) + 0.3 * n * (Math.PI - n) + 0.6 * n * (Math.PI - n) * (n - Math.PI / 2);
     return [ -p * Math.sin(t) * scale + tx, p * Math.cos(t) * scale + ty ];
-}, 20, 100);
+}, 20, 50);
 
 IICBot.run();
