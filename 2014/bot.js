@@ -1,3 +1,71 @@
+IIC.userListeners = {};
+
+// Sets a handler (function(data)) for a given event. Returns the handler's "identifier".
+IIC.addEventListener = function(event, listener) {
+    // We aren't calling user listeners for this event: start doing so.
+    if(!this.userListeners[event]) {
+        this.userListeners[event] = [];
+        
+        var defaultListener = events[event];
+        events[event] = function(data) {
+            defaultListener(data);
+            
+            for(var i = 0; i < this.userListeners[event].length; i++) {
+                if(this.userListeners[event][i])
+                    this.userListeners[event][i](data);
+            }
+        }.bind(this);
+    }
+    
+    return [ event, this.userListeners[event].push(listener) - 1 ];
+};
+
+// Removes an event handler with a given identifier.
+IIC.removeEventListener = function(listenerId) {
+    this.userListeners[listenerId[0]][listenerId[1]] = null;
+};
+
+// Sets a chat message handler with the following signature: function(userId, message).
+IIC.onChat = function(listener) {
+    return this.addEventListener('chat', function(data) { listener(data.id, data.message); });
+};
+
+// Sets a flag movement handler with the following signature: function(userId, newX, newY).
+IIC.onMovement = function(listener) {
+    return this.addEventListener('motion', function(data) { listener(data.id, data.x, data.y); });
+};
+
+// Sets a flag rotation handler with the following signature: function(userId, newAngle). newAngle is in radians.
+IIC.onRotation = function(listener) {
+    return this.addEventListener('scroll', function(data) { listener(data.id, data.angle / 180 * Math.PI); });
+};
+
+// Sets a wave handler with the following signature: function(userId, waveX, waveY).
+IIC.onWave = function(listener) {
+    return this.addEventListener('click', function(data) {
+        if(data.button === 'left')
+            listener(data.id, data.x, data.y);
+    });
+};
+
+// Sets a ghost handler with the following signature: function(userId, ghostX, ghostY).
+IIC.onGhost = function(listener) {
+    return this.addEventListener('click', function(data) {
+        if(data.button === 'right')
+            listener(data.id, data.x, data.y);
+    });
+};
+
+// Returns true if a user with given id is connected.
+IIC.isConnected = function(userId) {
+    return !!others[userId];
+};
+
+// Returns the current country, or that of another user if his id is provided.
+IIC.getCountry = function(userId) {
+    return userId ? others[userId].country : me.country;
+};
+
 var IICBot = {
     shape: {
         x: [], // position (x)
@@ -86,6 +154,17 @@ var IICBot = {
         }
     },
     
+    // Returns true if a given rectangular region includes a point in the shape.
+    hitTest: function(x, y, width, height) {
+        var x2 = x + width;
+        var y2 = y + height;
+        for(var i = 0; i < this.shape.x.length; i++) {
+            if(this.shape.x[i] > x && this.shape.x[i] < x2 && this.shape.y[i] > y && this.shape.y[i] < y2)
+                return true;
+        }
+        return false;
+    },
+    
     // Draws the shape over and over again.
     run: function() {
         var time = 0;
@@ -109,6 +188,14 @@ var IICBot = {
         this.runTimer = null;
     }
 };
+
+// Change flag if someone else clicks on the shape.
+IIC.onWave(function(userId, x, y) {
+    if(IIC.getCountry() === IIC.getCountry(userId))
+        return;
+    if(IICBot.hitTest(x - 20, y - 20, 40, 40))
+        IIC.setCountry(IIC.getCountry(userId));
+});
 
 IICBot.setCurve(function(t) {
     var scale = 40;
