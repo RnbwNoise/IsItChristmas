@@ -8,8 +8,10 @@ IIC.addEventListener = function(event, listener) {
         
         var defaultListener = events[event];
         events[event] = function(data) {
+            // Call the system's listener.
             defaultListener(data);
             
+            // And then all of the user-defined ones.
             for(var i = 0; i < this.userListeners[event].length; i++) {
                 if(this.userListeners[event][i])
                     this.userListeners[event][i](data);
@@ -17,6 +19,7 @@ IIC.addEventListener = function(event, listener) {
         }.bind(this);
     }
     
+    // Add user's listener.
     return [ event, this.userListeners[event].push(listener) - 1 ];
 };
 
@@ -72,9 +75,13 @@ var IICBot = {
         y: [], // position (y)
         a: [], // rotation (radians)
     },
+
     delayPerPoint: 200, // ms
+    hitTestRadius: 25, // px
     waveProbabiliy: 0.3,
+    
     runTimer: null,
+    listeners: [],
     
     // Normalizes the angle to [0, 2*M_PI].
     _normalizeAngle: function(angle) {
@@ -84,6 +91,23 @@ var IICBot = {
         while(angle > TWO_PI)
             angle -= TWO_PI;
         return angle;
+    },
+    
+    // Changes flag to that of a user with given id if a circle around a given point includes at least
+    // one point in the shape. Used to handle click events.
+    _clickHandler: function(userId, x, y) {
+        if(IIC.getCountry() === IIC.getCountry(userId))
+            return;
+        
+        var dx, dy;
+        for(var i = 0; i < this.shape.x.length; i++) {
+            dx = this.shape.x[i] - x;
+            dy = this.shape.y[i] - y;
+            if(Math.sqrt(dx*dx + dy*dy) < 2 * this.hitTestRadius) {
+                IIC.setCountry(IIC.getCountry(userId));
+                return;
+            }
+        }
     },
     
     // Sets the shape to a parametric curve. Provided function must take in a value between 0 and 1.
@@ -154,21 +178,17 @@ var IICBot = {
         }
     },
     
-    // Returns true if a given rectangular region includes a point in the shape.
-    hitTest: function(x, y, width, height) {
-        var x2 = x + width;
-        var y2 = y + height;
-        for(var i = 0; i < this.shape.x.length; i++) {
-            if(this.shape.x[i] > x && this.shape.x[i] < x2 && this.shape.y[i] > y && this.shape.y[i] < y2)
-                return true;
-        }
-        return false;
-    },
-    
-    // Draws the shape over and over again.
+    // Starts the bot.
     run: function() {
+        // We just started the cycle: set event listeners.
+        if(this.runTimer === null) {
+            this.listeners.push(IIC.onWave(this._clickHandler.bind(this)));
+            this.listeners.push(IIC.onGhost(this._clickHandler.bind(this)));
+        }
+        
         var time = 0;
         
+        // Schedule the processing of all points.
         for(var i = 0; i < this.shape.x.length; i++) {
             setTimeout(function(x, y, a) {
                 IIC.setAngle(a);
@@ -179,23 +199,22 @@ var IICBot = {
             time += this.delayPerPoint;
         }
         
+        // Schedule the next iteration of the loop.
         this.runTimer = setTimeout(this.run.bind(this), time);
     },
     
-    // Ends the shape drawing cycle.
+    // Stops the bot.
     stop: function() {
+        // Cancel the next iteration of the cycle.
         clearTimeout(this.runTimer);
         this.runTimer = null;
+        
+        // Remove all event listeners.
+        for(var i = 0; i < this.listeners.length; i++)
+            IIC.removeEventListener(this.listeners[i]);
+        this.listeners = [];
     }
 };
-
-// Change flag if someone else clicks on the shape.
-IIC.onWave(function(userId, x, y) {
-    if(IIC.getCountry() === IIC.getCountry(userId))
-        return;
-    if(IICBot.hitTest(x - 20, y - 20, 40, 40))
-        IIC.setCountry(IIC.getCountry(userId));
-});
 
 IICBot.setCurve(function(t) {
     var scale = 40;
