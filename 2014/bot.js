@@ -67,7 +67,9 @@ var IICBot = {
     
     // Deletes the shape.
     clearShape: function() {
-        this.shape.x = this.shape.y = this.shape.a = [];
+        this.shape.x = [];
+        this.shape.y = [];
+        this.shape.a = [];
     },
     
     // Enters the shape editing mode. Left mouse click adds a point, right mouse click removes the last one.

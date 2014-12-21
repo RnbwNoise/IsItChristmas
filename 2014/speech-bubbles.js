@@ -3,7 +3,5 @@ IIC.onChat(function(userId, name, message) {
     if(!position)
         return;
     var elementId = IIC.debugText(position.x, position.y, name + ': ' + message);
-    setTimeout(function() {
-        IIC.debugErase(elementId);
-    }, 5000);
+    setTimeout(function() { IIC.debugErase(elementId); }, 5000);
 });
