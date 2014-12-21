@@ -23,14 +23,65 @@ IIC.addEventListener = function(event, listener) {
     return [ event, this.userListeners[event].push(listener) - 1 ];
 };
 
-// Removes an event handler with a given identifier.
+// Removes an event handler with a given identifier. Returns true if the listener was successfully removed.
 IIC.removeEventListener = function(listenerId) {
+    // Make sure the id is valid and the listener exists.
+    if(!listenerId || !listenerId[0] || (typeof listenerId[1]) === 'undefined'
+       || !this.userListeners[listenerId[0]] || !this.userListeners[listenerId[0]][listenerId[1]])
+        return false;
+
+    // Delete the listener.
     this.userListeners[listenerId[0]][listenerId[1]] = null;
+    return true;
 };
+
+
+// Returns true if a user with given id is connected.
+IIC.isConnected = function(userId) {
+    return !!others[userId];
+};
+
+// Returns ids of all connected users.
+IIC.getConnectedIds = function() {
+    return Object.getOwnPropertyNames(others);
+};
+
+// Returns our own id.
+IIC.getId = function() {
+    return me.id;
+};
+
 
 // Sets a chat message handler with the following signature: function(userId, message).
 IIC.onChat = function(listener) {
-    return this.addEventListener('chat', function(data) { listener(data.id, data.message); });
+    return this.addEventListener('chat', function(data) {
+        if(data.id !== me.id)
+            listener(data.id, data.message);
+    });
+};
+
+
+// Returns the current country, or that of another user if his id is provided. If the user is disconnected,
+// returns null.
+IIC.getCountry = function(userId) {
+    if(userId)
+        return others[userId] ? others[userId].country : null;
+    return me.country;
+};
+
+
+// Returns the current position, or that of another user if his id is provided. If the flag does not exist, returns null.
+IIC.getPosition = function(userId) {
+    var flag;
+    if(userId)
+        flag = others[userId] ? others[userId].flag : null;
+    else
+        flag = me.flag;
+    
+    if(!flag || !flag.style.left || !flag.style.top)
+        return null;
+    
+    return { x: parseInt(flag.style.left), y: parseInt(flag.style.top) };
 };
 
 // Sets a flag movement handler with the following signature: function(userId, newX, newY).
@@ -38,10 +89,17 @@ IIC.onMovement = function(listener) {
     return this.addEventListener('motion', function(data) { listener(data.id, data.x, data.y); });
 };
 
+
+// Returns the current angle, or that of another user if his id is provided.
+IIC.getAngle = function(userId) {
+    return (userId ? others[userId].angle : me.angle) / 180 * Math.PI;
+};
+
 // Sets a flag rotation handler with the following signature: function(userId, newAngle). newAngle is in radians.
 IIC.onRotation = function(listener) {
     return this.addEventListener('scroll', function(data) { listener(data.id, data.angle / 180 * Math.PI); });
 };
+
 
 // Sets a wave handler with the following signature: function(userId, waveX, waveY).
 IIC.onWave = function(listener) {
@@ -59,15 +117,6 @@ IIC.onGhost = function(listener) {
     });
 };
 
-// Returns true if a user with given id is connected.
-IIC.isConnected = function(userId) {
-    return !!others[userId];
-};
-
-// Returns the current country, or that of another user if his id is provided.
-IIC.getCountry = function(userId) {
-    return userId ? others[userId].country : me.country;
-};
 
 var IICBot = {
     shape: {
@@ -181,7 +230,7 @@ var IICBot = {
     // Starts the bot.
     run: function() {
         // We just started the cycle: set event listeners.
-        if(this.runTimer === null) {
+        if(!this.runTimer) {
             this.listeners.push(IIC.onWave(this._clickHandler.bind(this)));
             this.listeners.push(IIC.onGhost(this._clickHandler.bind(this)));
         }
