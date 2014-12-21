@@ -8,6 +8,7 @@ var IICBot = {
     delayPerPoint: 200, // ms
     hitTestRadius: 25, // px
     waveProbabiliy: 0.3,
+    drawingFronts: 1,
     
     runTimer: null,
     listeners: [],
@@ -123,14 +124,31 @@ var IICBot = {
         
         var time = 0;
         
+        // Determine the order of traversal.
+        var points = [];
+        for(var i = 0; i < this.shape.x.length; i++)
+            points.push(i);
+        this.drawingFronts = Math.floor(this.drawingFronts);
+        if(this.drawingFronts > 1) {
+            var interlacing = Math.floor(points.length / this.drawingFronts);
+            points.sort(function(a, b) {
+                if(a % interlacing !== b % interlacing) {
+                    a %= interlacing;
+                    b %= interlacing;
+                }
+                return a - b;
+            });
+        }
+        
         // Process all the points.
-        for(var i = 0; i < this.shape.x.length; i++) {
+        for(var i = 0; i < points.length; i++) {
+            var pt = points[i];
             setTimeout(function(x, y, a) {
                 IIC.setAngle(a);
                 IIC.makeGhost(x, y);
                 if(Math.random() < this.waveProbabiliy)
                     IIC.makeWave(x, y);
-            }.bind(this, this.shape.x[i], this.shape.y[i], this.shape.a[i]), time);
+            }.bind(this, this.shape.x[pt], this.shape.y[pt], this.shape.a[pt]), time);
             time += this.delayPerPoint;
         }
         

@@ -164,7 +164,7 @@ IIC.debugPoint = function(x, y, color) {
     point.element.style.width = this._DEBUG_POINT_SIZE + 'px';
     point.element.style.height = this._DEBUG_POINT_SIZE + 'px';
     
-    point.element.style.backgroundColor = color ? color : 'black';
+    point.element.style.backgroundColor = color || 'black';
     
     return point.index;
 };
@@ -175,6 +175,7 @@ IIC.debugText = function(x, y, text, color) {
     textbox.element.innerText = text;
     
     textbox.element.style.fontFamily = 'sans-serif';
+    textbox.element.style.fontSize = '12px';
     
     if(color)
         textbox.element.style.color = color;
@@ -183,7 +184,7 @@ IIC.debugText = function(x, y, text, color) {
 };
 
 // Erases a debugging mark with a given id.
-debugErase = function(elementId) {
+IIC.debugErase = function(elementId) {
     if(!this._debugElements[elementId])
         return false;
     
