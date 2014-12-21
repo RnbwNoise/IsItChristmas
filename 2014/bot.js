@@ -40,6 +40,25 @@ var IICBot = {
         }
     },
     
+    // Returns the order of traversal of the points.
+    _getTraversalOrder: function() {
+        var points = [];
+        for(var i = 0; i < this.shape.x.length; i++)
+            points.push(i);
+        this.drawingFronts = Math.floor(this.drawingFronts);
+        if(this.drawingFronts > 1) {
+            var interlacing = Math.floor(points.length / this.drawingFronts);
+            points.sort(function(a, b) {
+                if(a % interlacing !== b % interlacing) {
+                    a %= interlacing;
+                    b %= interlacing;
+                }
+                return a - b;
+            });
+        }
+        return points;
+    },
+    
     // Sets the shape to a parametric curve. Provided function must take in a value between 0 and 1.
     setCurve: function(curve, count, attemptsToMakePointsEquidistant) {
         var params = [];
@@ -110,8 +129,12 @@ var IICBot = {
     
     // Draws points of the current shape.
     debugDisplayShapePoints: function() {
-        for(var i = 0; i < this.shape.x.length; i++)
-            IIC.debugPoint(this.shape.x[i], this.shape.y[i], 'blue')
+        var points = this._getTraversalOrder();
+        for(var i = 0; i < points.length; i++) {
+            var pt = points[i];
+            IIC.debugPoint(this.shape.x[pt], this.shape.y[pt], 'blue');
+            IIC.debugText(this.shape.x[pt], this.shape.y[pt], i, 'blue');
+        }
     },
     
     // Starts the bot.
@@ -124,23 +147,8 @@ var IICBot = {
         
         var time = 0;
         
-        // Determine the order of traversal.
-        var points = [];
-        for(var i = 0; i < this.shape.x.length; i++)
-            points.push(i);
-        this.drawingFronts = Math.floor(this.drawingFronts);
-        if(this.drawingFronts > 1) {
-            var interlacing = Math.floor(points.length / this.drawingFronts);
-            points.sort(function(a, b) {
-                if(a % interlacing !== b % interlacing) {
-                    a %= interlacing;
-                    b %= interlacing;
-                }
-                return a - b;
-            });
-        }
-        
         // Process all the points.
+        var points = this._getTraversalOrder();
         for(var i = 0; i < points.length; i++) {
             var pt = points[i];
             setTimeout(function(x, y, a) {
