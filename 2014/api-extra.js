@@ -212,6 +212,17 @@ IIC.debugText = function(x, y, text, color) {
     return textbox.index;
 };
 
+// Draws a flag for debugging purposes.
+IIC.debugFlag = function(x, y, a, countryCode) {
+    var element = flagFor(countryCode, 'ghost');
+    document.body.appendChild(element);
+    
+    setRotate(element, a / Math.PI * 180);
+    moveFlag(element, x, y);
+    
+    return this._debugElements.push(element) - 1;
+};
+
 // Erases a debugging mark with a specified id. Returns true if the mark was successfully erased.
 IIC.debugErase = function(elementId) {
     if(!this._debugElements[elementId])

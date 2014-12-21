@@ -4,7 +4,7 @@
 // 3. To change the default heart shape, enter "IICBot.startEditor()". Left mouse
 //    click will add a new point, right mouse click will delete the last point. When
 //    you are finished editing the shape, enter "IICBot.stopEditor()".
-// 4. To start the bot, enter "IICBot.run()".
+// 4. To start the bot, enter "IICBot.start()".
 // 5. To stop the bot, enter "IICBot.stop()".
 
 var IICBot = {
@@ -26,7 +26,6 @@ var IICBot = {
     
     _runTimer: null,
     _listeners: [],
-    _ignoreRotation: false,
     
     // Normalizes the angle to [0, 2*M_PI].
     _normalizeAngle: function(angle) {
@@ -36,6 +35,19 @@ var IICBot = {
         while(angle > TWO_PI)
             angle -= TWO_PI;
         return angle;
+    },
+    
+    // Displays a point with specified index for the editor.
+    _editorDisplayPoint: function(index) {
+        var x = this.shape.x[index];
+        var y = this.shape.y[index];
+        var a = this.shape.a[index];
+        this._editorMarks.push([
+            IIC.debugFlag(x, y, a, IIC.getCountry()),
+            IIC.debugRay(x, y, this.editorRayLength, a, this.editorMarksColor),
+            IIC.debugPoint(x, y, this.editorMarksColor),
+            IIC.debugText(x, y, index, this.editorMarksColor)
+        ]);
     },
     
     // Changes flag to that of a user with given id if a circle around a given point includes at least
@@ -87,17 +99,12 @@ var IICBot = {
         if(this._editorOldMouseDown)
             return;
         
+        // Stop the bot.
+        this.stop();
+        
         // Draw the current points.
-        for(var i = 0; i < this.shape.x.length; i++) {
-            var x = this.shape.x[i];
-            var y = this.shape.y[i];
-            var a = this.shape.a[i];
-            this._editorMarks.push([
-                IIC.debugRay(x, y, this.editorRayLength, a, this.editorMarksColor),
-                IIC.debugPoint(x, y, this.editorMarksColor),
-                IIC.debugText(x, y, i, this.editorMarksColor)
-            ]);
-        }
+        for(var i = 0; i < this.shape.x.length; i++)
+            this._editorDisplayPoint(i);
         
         // Replace the old click handler.
         this._editorOldMouseDown = document.onmousedown;
@@ -107,16 +114,12 @@ var IICBot = {
                 // Record current position/angle.
                 var p = IIC.getPosition();
                 var a = IIC.getAngle();
-                var i = this.shape.x.push(p.x) - 1;
+                var index = this.shape.x.push(p.x) - 1;
                 this.shape.y.push(p.y);
                 this.shape.a.push(a);
                 
                 // And draw a point on the screen.
-                this._editorMarks.push([
-                    IIC.debugRay(p.x, p.y, this.editorRayLength, a, this.editorMarksColor),
-                    IIC.debugPoint(p.x, p.y, this.editorMarksColor),
-                    IIC.debugText(p.x, p.y, i, this.editorMarksColor)
-                ]);
+                this._editorDisplayPoint(index);
             }
             
             // Right mouse button removes points.
@@ -134,9 +137,6 @@ var IICBot = {
                 }
             }
         }).bind(this);
-        
-        // Turn off rotation in run() to let the user adjust it by himself.
-        this._ignoreRotation = true;
     },
     
     // Exists the shape editing mode.
@@ -155,9 +155,6 @@ var IICBot = {
             for(var i = 0; i < oldMarks.length; i++)
                 IIC.debugErase(oldMarks[i]);
         }
-        
-        // Turn on rotation in run().
-        this._ignoreRotation = false;
     },
     
     // Sets the shape to a parametric curve. Provided function must take in a value between 0 and 1.
@@ -227,25 +224,26 @@ var IICBot = {
             this.shape.a.push(angle);
         }
     },
-    
-    // Draws points of the current shape.
-    debugDisplayShapePoints: function() {
-        var points = this._getTraversalOrder();
-        for(var i = 0; i < points.length; i++) {
-            var pt = points[i];
-            IIC.debugPoint(this.shape.x[pt], this.shape.y[pt], 'blue');
-            IIC.debugText(this.shape.x[pt], this.shape.y[pt], i, 'blue');
-        }
+        
+    // Starts the bot.
+    start: function() {
+        // The bot is already running.
+        if(this._runTimer)
+            return;
+        
+        // Stop the editor if it is running.
+        this.stopEditor();
+        
+        // Set event listeners.
+        this._listeners.push(IIC.onWave(this._clickHandler.bind(this)));
+        this._listeners.push(IIC.onGhost(this._clickHandler.bind(this)));
+        
+        // Start the loop.
+        this._run();
     },
     
-    // Starts the bot.
-    run: function() {
-        // We just started the cycle: set event listeners.
-        if(!this._runTimer) {
-            this._listeners.push(IIC.onWave(this._clickHandler.bind(this)));
-            this._listeners.push(IIC.onGhost(this._clickHandler.bind(this)));
-        }
-        
+    // Runs the bot.
+    _run: function() {
         var time = 0;
         
         // Process all the points.
@@ -253,8 +251,7 @@ var IICBot = {
         for(var i = 0; i < points.length; i++) {
             var pt = points[i];
             setTimeout(function(x, y, a) {
-                if(!this._ignoreRotation)
-                    IIC.setAngle(a);
+                IIC.setAngle(a);
                 IIC.makeGhost(x, y);
                 if(Math.random() < this.waveProbabiliy)
                     IIC.makeWave(x, y);
@@ -263,11 +260,15 @@ var IICBot = {
         }
         
         // Schedule the next iteration of the loop.
-        this._runTimer = setTimeout(this.run.bind(this), time);
+        this._runTimer = setTimeout(this._run.bind(this), time);
     },
     
     // Stops the bot.
     stop: function() {
+        // The bot is already idle.
+        if(!this._runTimer)
+            return;
+        
         // Cancel the next iteration of the cycle.
         clearTimeout(this._runTimer);
         this._runTimer = null;
