@@ -39,9 +39,9 @@ IIC.removeEventListener = function(listenerId) {
 
 // Connection
 
-// Returns true if a user with given id is connected.
-IIC.isConnected = function(userId) {
-    return !!others[userId];
+// Returns our own id.
+IIC.getId = function() {
+    return me.id;
 };
 
 // Returns ids of all connected users.
@@ -49,9 +49,16 @@ IIC.getConnectedIds = function() {
     return Object.getOwnPropertyNames(others);
 };
 
-// Returns our own id.
-IIC.getId = function() {
-    return me.id;
+// Returns true if a user with given id is connected.
+IIC.isConnected = function(userId) {
+    return !!others[userId];
+};
+
+// Sets a new connection handler with the following signature: function(userId).
+IIC.onConnection = function(listener) {
+    return this.addEventListener('arrive', function(data) {
+        listener(data.id);
+    });
 };
 
 // Chat
@@ -157,7 +164,7 @@ IIC._addDebugDiv = function(x, y) {
     return { element: element, index: this._debugElements.push(element) - 1 };
 };
 
-// Draws a point at a given location for debugging purposes.
+// Draws a point for debugging purposes.
 IIC.debugPoint = function(x, y, color) {
     var point = this._addDebugDiv(x - this._DEBUG_POINT_SIZE / 2, y - this._DEBUG_POINT_SIZE / 2);
     
@@ -169,13 +176,35 @@ IIC.debugPoint = function(x, y, color) {
     return point.index;
 };
 
-// Draws a string at a given location for debugging purposes.
+// Draws a line between two points for debugging purposes.
+IIC.debugLine = function(x1, y1, x2, y2, color) {
+    var dx = x2 - x1;
+    var dy = y2 - y1;
+    return this.debugRay(x1, y1, Math.sqrt(dx*dx + dy*dy), Math.atan2(dy, dx), color);
+};
+
+// Draws a ray for debugging purposes. Angle must be in radians.
+IIC.debugRay = function(x, y, length, angle, color) {
+    var ray = this._addDebugDiv(x, y);
+    
+    ray.element.style.width = length + 'px';
+    ray.element.style.height = '2px';
+    ray.element.style.transform = 'rotate(' + angle + 'rad)';
+    ray.element.style.transformOrigin = '0% 0%';
+    
+    ray.element.style.backgroundColor = color || 'black';
+    
+    return ray.index;
+};
+
+// Draws a string for debugging purposes.
 IIC.debugText = function(x, y, text, color) {
     var textbox = this._addDebugDiv(x, y);
     textbox.element.innerText = text;
     
     textbox.element.style.fontFamily = 'sans-serif';
     textbox.element.style.fontSize = '12px';
+    textbox.element.style.textShadow = '-1px 0px 0px white, 1px 0px 0px white, 0px -1px 0px white, 0px 1px 0px white';
     
     if(color)
         textbox.element.style.color = color;
@@ -183,7 +212,7 @@ IIC.debugText = function(x, y, text, color) {
     return textbox.index;
 };
 
-// Erases a debugging mark with a given id.
+// Erases a debugging mark with a specified id. Returns true if the mark was successfully erased.
 IIC.debugErase = function(elementId) {
     if(!this._debugElements[elementId])
         return false;

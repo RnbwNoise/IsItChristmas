@@ -10,8 +10,14 @@ var IICBot = {
     waveProbabiliy: 0.3,
     drawingFronts: 1,
     
-    runTimer: null,
-    listeners: [],
+    editorRayLength: 20, //px
+    editorMarksColor: 'green',
+    _editorOldMouseDown: null,
+    _editorMarks: [],
+    
+    _runTimer: null,
+    _listeners: [],
+    _ignoreRotation: false,
     
     // Normalizes the angle to [0, 2*M_PI].
     _normalizeAngle: function(angle) {
@@ -57,6 +63,90 @@ var IICBot = {
             });
         }
         return points;
+    },
+    
+    // Deletes the shape.
+    clearShape: function() {
+        this.shape.x = this.shape.y = this.shape.a = [];
+    },
+    
+    // Enters the shape editing mode. Left mouse click adds a point, right mouse click removes the last one.
+    startEditor: function() {
+        // The editor is already running...
+        if(this._editorOldMouseDown)
+            return;
+        
+        // Draw the current points.
+        for(var i = 0; i < this.shape.x.length; i++) {
+            var x = this.shape.x[i];
+            var y = this.shape.y[i];
+            var a = this.shape.a[i];
+            this._editorMarks.push([
+                IIC.debugRay(x, y, this.editorRayLength, a, this.editorMarksColor),
+                IIC.debugPoint(x, y, this.editorMarksColor),
+                IIC.debugText(x, y, i, this.editorMarksColor)
+            ]);
+        }
+        
+        // Replace the old click handler.
+        this._editorOldMouseDown = document.onmousedown;
+        document.onmousedown = (function(event) {
+            // Left mouse button adds points.
+            if(event.button === 0) {
+                // Record current position/angle.
+                var p = IIC.getPosition();
+                var a = IIC.getAngle();
+                var i = this.shape.x.push(p.x) - 1;
+                this.shape.y.push(p.y);
+                this.shape.a.push(a);
+                
+                // And draw a point on the screen.
+                this._editorMarks.push([
+                    IIC.debugRay(p.x, p.y, this.editorRayLength, a, this.editorMarksColor),
+                    IIC.debugPoint(p.x, p.y, this.editorMarksColor),
+                    IIC.debugText(p.x, p.y, i, this.editorMarksColor)
+                ]);
+            }
+            
+            // Right mouse button removes points.
+            else if(event.button === 2) {
+                // Remove the point.
+                this.shape.x.pop();
+                this.shape.y.pop();
+                this.shape.a.pop();
+                
+                // And erase marks for it.
+                var oldMarks = this._editorMarks.pop();
+                if(oldMarks) {
+                    for(var i = 0; i < oldMarks.length; i++)
+                        IIC.debugErase(oldMarks[i]);
+                }
+            }
+        }).bind(this);
+        
+        // Turn off rotation in run() to let the user adjust it by himself.
+        this._ignoreRotation = true;
+    },
+    
+    // Exists the shape editing mode.
+    stopEditor: function() {
+        // The editor is already stopped...
+        if(!this._editorOldMouseDown)
+            return;
+        
+        // Put the old click handler back.
+        document.onmousedown = this._editorOldMouseDown;
+        this._editorOldMouseDown = null;
+        
+        // Erase all marks.
+        var oldMarks;
+        while(oldMarks = this._editorMarks.pop()) {
+            for(var i = 0; i < oldMarks.length; i++)
+                IIC.debugErase(oldMarks[i]);
+        }
+        
+        // Turn on rotation in run().
+        this._ignoreRotation = false;
     },
     
     // Sets the shape to a parametric curve. Provided function must take in a value between 0 and 1.
@@ -140,9 +230,9 @@ var IICBot = {
     // Starts the bot.
     run: function() {
         // We just started the cycle: set event listeners.
-        if(!this.runTimer) {
-            this.listeners.push(IIC.onWave(this._clickHandler.bind(this)));
-            this.listeners.push(IIC.onGhost(this._clickHandler.bind(this)));
+        if(!this._runTimer) {
+            this._listeners.push(IIC.onWave(this._clickHandler.bind(this)));
+            this._listeners.push(IIC.onGhost(this._clickHandler.bind(this)));
         }
         
         var time = 0;
@@ -152,7 +242,8 @@ var IICBot = {
         for(var i = 0; i < points.length; i++) {
             var pt = points[i];
             setTimeout(function(x, y, a) {
-                IIC.setAngle(a);
+                if(!this._ignoreRotation)
+                    IIC.setAngle(a);
                 IIC.makeGhost(x, y);
                 if(Math.random() < this.waveProbabiliy)
                     IIC.makeWave(x, y);
@@ -161,19 +252,19 @@ var IICBot = {
         }
         
         // Schedule the next iteration of the loop.
-        this.runTimer = setTimeout(this.run.bind(this), time);
+        this._runTimer = setTimeout(this.run.bind(this), time);
     },
     
     // Stops the bot.
     stop: function() {
         // Cancel the next iteration of the cycle.
-        clearTimeout(this.runTimer);
-        this.runTimer = null;
+        clearTimeout(this._runTimer);
+        this._runTimer = null;
         
         // Remove all event listeners.
-        for(var i = 0; i < this.listeners.length; i++)
-            IIC.removeEventListener(this.listeners[i]);
-        this.listeners = [];
+        var listener;
+        while(listener = this._listeners.pop())
+            IIC.removeEventListener(listener);
     }
 };
 
