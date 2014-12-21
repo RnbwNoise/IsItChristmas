@@ -2,7 +2,8 @@
 
 ## 2014
 
-![](https://github.com/RnbwNoise/IsItChristmas/blob/master/2014/screenshot.png)
+![](https://github.com/RnbwNoise/IsItChristmas/blob/master/2014/screenshot-heart.png)
+![](https://github.com/RnbwNoise/IsItChristmas/blob/master/2014/screenshot-editor.png)
 
 https://github.com/RnbwNoise/IsItChristmas/blob/master/2014/bot.js
 
