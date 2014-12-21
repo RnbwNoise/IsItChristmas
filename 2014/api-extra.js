@@ -63,11 +63,11 @@ IIC.onConnection = function(listener) {
 
 // Chat
 
-// Sets a chat message handler with the following signature: function(userId, message).
+// Sets a chat message handler with the following signature: function(userId, name, message).
 // NOTE: the handler will also process our own chat messages.
 IIC.onChat = function(listener) {
     return this.addEventListener('chat', function(data) {
-        listener(data.id, data.message);
+        listener(data.id, data.name, data.message);
     });
 };
 
