@@ -130,11 +130,13 @@ IIC.onGhost = function(listener) {
 
 
 IIC._DEBUG_POINT_SIZE = 4;
+IIC._DEBUG_Z_INDEX = 10000;
 IIC._debugElements = [];
 
 // Adds a div for debugging marks.
 IIC._addDebugDiv = function(x, y) {
     var element = document.createElement('div');
+    element.style.zIndex = this._DEBUG_Z_INDEX;
     
     element.style.position = 'absolute';
     element.style.left = x + 'px';
@@ -157,9 +159,9 @@ IIC.debugPoint = function(x, y, color) {
 };
 
 // Draws a string at a given location for debugging purposes.
-IIC.debugText = function(x, y, string, color) {
+IIC.debugText = function(x, y, text, color) {
     var textElement = this._addDebugDiv(x, y);
-    textElement.innerText = string;
+    textElement.innerText = text;
     
     textElement.style.fontFamily = 'sans-serif';
     
@@ -282,6 +284,12 @@ var IICBot = {
             
             this.shape.a.push(angle);
         }
+    },
+    
+    // Draws points of the current shape.
+    debugDisplayShapePoints: function() {
+        for(var i = 0; i < this.shape.x.length; i++)
+            IIC.debugPoint(this.shape.x[i], this.shape.y[i], 'blue')
     },
     
     // Starts the bot.
