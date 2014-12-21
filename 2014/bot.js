@@ -1,3 +1,12 @@
+// In the developer's console:
+// 1. Paste the contents of api-extra.js
+// 2. Paste the contents of this file.
+// 3. To change the default heart shape, enter "IICBot.startEditor()". Left mouse
+//    click will add a new point, right mouse click will delete the last point. When
+//    you are finished editing the shape, enter "IICBot.stopEditor()".
+// 4. To start the bot, enter "IICBot.run()".
+// 5. To stop the bot, enter "IICBot.stop()".
+
 var IICBot = {
     shape: {
         x: [], // position (x)
@@ -270,6 +279,7 @@ var IICBot = {
     }
 };
 
+// The default heart shape.
 IICBot.setCurve(function(t) {
     var scale = 40;
     var tx = 400;
@@ -281,5 +291,3 @@ IICBot.setCurve(function(t) {
     var p = 2.0 * (1 - n / Math.PI) + 0.3 * n * (Math.PI - n) + 0.6 * n * (Math.PI - n) * (n - Math.PI / 2);
     return [ -p * Math.sin(t) * scale + tx, p * Math.cos(t) * scale + ty ];
 }, 20, 50);
-
-IICBot.run();
