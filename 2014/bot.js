@@ -205,7 +205,6 @@ var IICBot = {
         }
         
         // Calculate the angle AOB, where A and B are the upper corners of the flag and O is its center point.
-        var FLAG_HEIGHT = 20;
         var flagAngle = this._normalizeAngle(Math.atan2(IIC.getFlagWidth(IIC.getCountry()) / 2,
                                                         IIC.getFlagHeight(IIC.getCountry()) / 2) * 2);
         
