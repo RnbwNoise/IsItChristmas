@@ -70,6 +70,17 @@ IIC.getCountry = function(userId) {
 };
 
 
+// Returns the width of a flag of a given country.
+IIC.getFlagWidth = function(countryCode) {
+    return flagWidth(countryCode);
+};
+
+// Returns the height of a flag of a given country.
+IIC.getFlagHeight = function(countryCode) {
+    return 20;
+};
+
+
 // Returns the current position, or that of another user if his id is provided. If the flag does not exist, returns null.
 IIC.getPosition = function(userId) {
     var flag;
@@ -195,7 +206,8 @@ var IICBot = {
         
         // Calculate the angle AOB, where A and B are the upper corners of the flag and O is its center point.
         var FLAG_HEIGHT = 20;
-        var flagAngle = this._normalizeAngle(Math.atan2(flagWidth(me.country) / 2, FLAG_HEIGHT / 2) * 2);
+        var flagAngle = this._normalizeAngle(Math.atan2(IIC.getFlagWidth(IIC.getCountry()) / 2,
+                                                        IIC.getFlagHeight(IIC.getCountry()) / 2) * 2);
         
         // Calculate all rotation angles.
         this.shape.a = [];
@@ -237,7 +249,7 @@ var IICBot = {
         
         var time = 0;
         
-        // Schedule the processing of all points.
+        // Process all the points.
         for(var i = 0; i < this.shape.x.length; i++) {
             setTimeout(function(x, y, a) {
                 IIC.setAngle(a);
