@@ -4,6 +4,7 @@
 
 ![](https://github.com/RnbwNoise/IsItChristmas/blob/master/2014/screenshot-heart.png)
 ![](https://github.com/RnbwNoise/IsItChristmas/blob/master/2014/screenshot-editor.png)
+![](https://github.com/RnbwNoise/IsItChristmas/blob/master/2014/screenshot-car.png)
 
 https://github.com/RnbwNoise/IsItChristmas/blob/master/2014/bot.js
 
