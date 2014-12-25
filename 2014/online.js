@@ -36,9 +36,9 @@ var IICOnline = {
             var data = this._onlineData.slice(-this.displayPoints);
             var min = Math.min.apply(null, data);
             var max = Math.max.apply(null, data);
-            say('Online: ' + sparkly(data) + ' (low: ' + min + ', high:' + max + ')');
+            say('Online: ' + sparkly(data) + ' (min: ' + min + ', max: ' + max + ')');
             
-            // Ignore graph requests for the next few ms
+            // Ignore graph requests for the next requestRatelimit ms
             this._ignoreRequests = true;
             setInterval(function() { this._ignoreRequests = false; }.bind(this), this.requestRatelimit);
         }.bind(this));
