@@ -97,7 +97,8 @@ var IICBot = {
     // Changes flag to that of a user with given id if a circle around a given point includes at least
     // one point in the shape. Used to handle click events.
     _clickHandler: function(userId, x, y) {
-        if(IIC.getCountry() === IIC.getCountry(userId))
+        var newCountry = IIC.getCountry(userId);
+        if(!newCountry || IIC.getCountry() === newCountry)
             return;
         
         var dx, dy;
@@ -105,7 +106,7 @@ var IICBot = {
             dx = this.shape.x[i] - x;
             dy = this.shape.y[i] - y;
             if(Math.sqrt(dx*dx + dy*dy) < 2 * this.hitTestRadius) {
-                IIC.setCountry(IIC.getCountry(userId));
+                IIC.setCountry(newCountry);
                 return;
             }
         }
