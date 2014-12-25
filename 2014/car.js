@@ -143,8 +143,11 @@ var IICCar = {
             this._velocity = 0;
         
         // Update the flag.
-        IIC.setPosition(p.x, p.y);
-        IIC.setAngle(a);
+        var currentPosition = IIC.getPosition();
+        if(currentPosition.x !== p.x || currentPosition.y !== p.y)
+            IIC.setPosition(p.x, p.y);
+        if(IIC.getAngle() !== a)
+            IIC.setAngle(a);
     },
     
     // Limits a value to a given range.
