@@ -4,10 +4,10 @@
 // 3. Click anywhere on the stage.
 
 var IICCar = {
-    _FRICTION: 0.95,
-    _MAX_VELOCITY: 30, // px/update
-    _KEY_ANGULAR_VELOCITY: (Math.PI / 8), // radians/update
-    _KEY_ACCELERATION: 10, // px^2/update
+    friction: 0.85, // velocity will be multiplied by this value every update
+    maxVelocity: 30,
+    keyAngularVelocityFactor: (Math.PI / 300), // angular velocity = this (factor exerted by a key) times velocity
+    keyAcceleration: 10, // acceleration exerted by a key
     
     _UPDATE_INTERVAL: 200, // ms
     
@@ -17,9 +17,11 @@ var IICCar = {
     _KEY_RIGHT: 39,
     _KEY_DOWN: 40,
     
+    _VELOCITY_EPSILON: 0.5,
+    
     _velocity: 0,
     _acceleration: 0,
-    _angularVelocity: 0,
+    _angularVelocityFactor: 0,
     
     _isRunning: false,
     _oldKeyUp: null,
@@ -85,16 +87,16 @@ var IICCar = {
     _keyChangeHandler: function(key, isDown) {
         switch(key) {
             case this._KEY_LEFT:
-                this._angularVelocity = -this._KEY_ANGULAR_VELOCITY * isDown;
+                this._angularVelocityFactor = -this.keyAngularVelocityFactor * isDown;
                 break;
             case this._KEY_RIGHT:
-                this._angularVelocity = this._KEY_ANGULAR_VELOCITY * isDown;
+                this._angularVelocityFactor = this.keyAngularVelocityFactor * isDown;
                 break;
             case this._KEY_UP:
-                this._acceleration = this._KEY_ACCELERATION * isDown;
+                this._acceleration = this.keyAcceleration * isDown;
                 break;
             case this._KEY_DOWN:
-                this._acceleration = -this._KEY_ACCELERATION * isDown;
+                this._acceleration = -this.keyAcceleration * isDown;
                 break;
             case this._KEY_SPACE:
                 var p = IIC.getPosition();
@@ -116,7 +118,7 @@ var IICCar = {
         IIC.makeGhost(p.x, p.y);
         
         // Adjust the angle based on angular velocity.
-        var a = IIC.getAngle() + this._angularVelocity * (this._velocity < 0 ? -1 : 1);
+        var a = IIC.getAngle() + (this._angularVelocityFactor * this._velocity);
         
         // Adjust position based on angle and velocity.
         p.x += Math.cos(a) * this._velocity;
@@ -133,8 +135,12 @@ var IICCar = {
         }
         
         // Apply acceleration and friction.
-        this._velocity = this._clamp(this._velocity + this._acceleration, -this._MAX_VELOCITY, this._MAX_VELOCITY)
-                         * this._FRICTION;
+        this._velocity = this._clamp(this._velocity + this._acceleration, -this.maxVelocity, this.maxVelocity)
+                         * this.friction;
+        
+        // Prevent infinite sliding.
+        if(Math.abs(this._velocity) < this._VELOCITY_EPSILON)
+            this._velocity = 0;
         
         // Update the flag.
         IIC.setPosition(p.x, p.y);
