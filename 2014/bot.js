@@ -15,7 +15,6 @@ var IICBot = {
 
     delayPerPoint: 200, // ms
     hitTestRadius: 25, // px
-    waveProbabiliy: 0.3,
     drawingFronts: 1,
     
     _runTimer: null,
@@ -49,8 +48,6 @@ var IICBot = {
             setTimeout(function(x, y, a) {
                 IIC.setAngle(a);
                 IIC.makeGhost(x, y);
-                if(Math.random() < this.waveProbabiliy)
-                    IIC.makeWave(x, y);
             }.bind(this, this.shape.x[pt], this.shape.y[pt], this.shape.a[pt]), time);
             time += this.delayPerPoint;
         }
@@ -94,19 +91,14 @@ var IICBot = {
         return points;
     },
     
-    // Changes flag to that of a user with given id if a circle around a given point includes at least
-    // one point in the shape. Used to handle click events.
+    // Click event handler: creates a wave if someone clicks near the shape.
     _clickHandler: function(userId, x, y) {
-        var newCountry = IIC.getCountry(userId);
-        if(!newCountry || IIC.getCountry() === newCountry)
-            return;
-        
         var dx, dy;
         for(var i = 0; i < this.shape.x.length; i++) {
             dx = this.shape.x[i] - x;
             dy = this.shape.y[i] - y;
             if(Math.sqrt(dx*dx + dy*dy) < 2 * this.hitTestRadius) {
-                IIC.setCountry(newCountry);
+                IIC.makeWave(this.shape.x[i], this.shape.y[i]);
                 return;
             }
         }
