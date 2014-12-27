@@ -4,13 +4,13 @@
 
 var IICOnline = {
     getCurrentMeasurement: function() { return IIC.getConnectedIds().length; },
-    measurementInterval: 1000 * 60 * 5, // ms
+    measurementInterval: 1000 * 60 * 5, // 5 minutes
     
-    displayPoints: (60 / 5) * 24,
-    displayBlocks: 20,
+    displayPoints: (60 / 5) * 6, // 6 hours
+    displayBlocks: 30,
     
     requestMatch: /online/,
-    requestRatelimit: 1000 * 60 * 5, // ms
+    requestRatelimit: 1000 * 60 * 5, // 5 minutes
     
     _isRunning: false,
     _dataPoints: [],
